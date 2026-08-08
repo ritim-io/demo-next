@@ -83,3 +83,11 @@ jobs:
             } else {
               await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
             }
+
+      - name: Run Ritim
+        if: github.event_name == 'pull_request'
+        uses: ritim-io/pr-review-action@main
+        with:
+          project-secret: ${{ secrets.RITIM_PROJECT_SECRET }}
+          preview-url: ${{ toJSON(steps.deploy.outputs.url) }}
+          api-url: 'https://staging-api.ritim.io'
