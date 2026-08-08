@@ -90,4 +90,4 @@ jobs:
         with:
           project-secret: ${{ secrets.RITIM_PROJECT_SECRET }}
           preview-url: ${{ steps.deploy.outputs.url }}
-          api-url: 'https://staging-api.ritim.io'
+          api-url: 'https://api-staging.ritim.io'
