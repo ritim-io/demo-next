@@ -27,7 +27,7 @@ export function RitimAnalytics() {
       // default 0.25. The collector still applies the project's own rate.
       sampleRate: 1,
       // Logs every payload to the console. Stripped from production builds.
-      debug: process.env.NODE_ENV === "development",
+      debug: true // process.env.NODE_ENV === "development",
     });
   }, []);
 
