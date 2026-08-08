@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ritim/browser-sdk':
+        specifier: ^0.1.2
+        version: 0.1.2
       next:
         specifier: 16.3.0
         version: 16.3.0(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -450,6 +453,9 @@ packages:
   '@nolyfill/is-core-module@1.0.39':
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
+
+  '@ritim/browser-sdk@0.1.2':
+    resolution: {integrity: sha512-LuzqFKeIFqvZTP5cJWO8Bdxl85h0kkoucsxfUtJnOqgJe4Jc1wGqSqTcT4ydY1mdTkcLpSQUIug5ZG78IWq/Yw==}
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
@@ -2378,6 +2384,8 @@ snapshots:
       fastq: 1.20.1
 
   '@nolyfill/is-core-module@1.0.39': {}
+
+  '@ritim/browser-sdk@0.1.2': {}
 
   '@rtsao/scc@1.1.0': {}
 
