@@ -89,5 +89,5 @@ jobs:
         uses: ritim-io/pr-review-action@main
         with:
           project-secret: ${{ secrets.RITIM_PROJECT_SECRET }}
-          preview-url: ${{ toJSON(steps.deploy.outputs.url) }}
+          preview-url: ${{ steps.deploy.outputs.url }}
           api-url: 'https://staging-api.ritim.io'
