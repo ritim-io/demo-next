@@ -13,7 +13,7 @@ import {
 } from "./_lab/config";
 
 export const metadata: Metadata = {
-  title: "Web Vitals Lab — intentionally bad page",
+  title: "Web Vitals Lab",
   description:
     "A demo page built to fail LCP, CLS and INP on purpose, for web vitals measurement.",
 };
@@ -32,7 +32,7 @@ function Section({
   return (
     <section className="w-full space-y-4 border-t border-zinc-200 pt-8 dark:border-zinc-800">
       <div className="space-y-1">
-        <span className="inline-block rounded bg-red-100 px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-red-700 uppercase dark:bg-red-950 dark:text-red-300">
+        <span className="inline-block rounded bg-red-300 px-2 py-0.5 font-mono text-xs font-semibold tracking-wide text-red-700 uppercase dark:bg-red-950 dark:text-red-300">
           {metric}
         </span>
         <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
@@ -78,11 +78,11 @@ export default function Home() {
           </Suspense>
         </Section>
 
-        <Section
+{/*         <Section
           metric="CLS"
           title="Three unreserved boxes appear after first paint"
           detail={`The two boxes at the top of the page do the damage: the banner drops in at ${CLS_BANNER_DELAY_MS}ms and the ad slot expands at ${CLS_AD_DELAY_MS}ms, each pushing everything below it down. The hero image adds a third shift, since it has no width/height and only takes up space once it decodes.`}
-        />
+        /> */}
 
         <Section
           metric="INP"
