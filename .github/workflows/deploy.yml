@@ -151,7 +151,13 @@ jobs:
 
           echo "removed=$count" >> "$GITHUB_OUTPUT"
           echo "Removed $count preview deployment(s) for PR #$PR_NUMBER" >> "$GITHUB_STEP_SUMMARY"
-
+      # Let ritim know
+      - name: Run Ritim
+        uses: ritim-io/pr-review-action@main
+        with:
+          project-secret: ${{ secrets.RITIM_PROJECT_SECRET }}
+          preview-url: ${{ steps.deploy.outputs.url }}
+          api-url: 'https://api-staging.ritim.io'
       # The preview URL and Ritim's performance report both point at a host
       # that no longer resolves. Mark them so the PR has no dead links.
       - name: Retract preview and Ritim comments
