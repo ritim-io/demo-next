@@ -78,11 +78,11 @@ export default function Home() {
           </Suspense>
         </Section>
 
-{/*         <Section
+        <Section
           metric="CLS"
           title="Three unreserved boxes appear after first paint"
           detail={`The two boxes at the top of the page do the damage: the banner drops in at ${CLS_BANNER_DELAY_MS}ms and the ad slot expands at ${CLS_AD_DELAY_MS}ms, each pushing everything below it down. The hero image adds a third shift, since it has no width/height and only takes up space once it decodes.`}
-        /> */}
+        />
 
         <Section
           metric="INP"
