@@ -5,20 +5,23 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-
-# Only keep the newest run per branch/PR; cancel superseded deploys.
-concurrency:
-  group: vercel-${{ github.ref }}
-  cancel-in-progress: true
+    # `closed` is not in the default set — without it the teardown never fires.
+    types: [opened, synchronize, reopened, closed]
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy:
     name: ${{ github.event_name == 'push' && 'Production' || 'Preview' }}
+    if: github.event_name == 'push' || github.event.action != 'closed'
     runs-on: ubuntu-latest
+    # Keep only the newest deploy per branch/PR; cancel superseded ones.
+    concurrency:
+      group: vercel-deploy-${{ github.ref }}
+      cancel-in-progress: true
     environment:
       name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
       url: ${{ steps.deploy.outputs.url }}
@@ -53,15 +56,20 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel environment
-        run: vercel pull --yes --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=${{ github.event_name == 'push' && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
 
       - name: Build
-        run: vercel build ${{ github.event_name == 'push' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build ${{ github.event_name == 'push' && '--prod' || '' }} --token="$VERCEL_TOKEN"
 
       - name: Deploy
         id: deploy
+        env:
+          # Tags preview deployments with the PR that created them so the
+          # teardown job can find exactly these later. Empty on push.
+          META: ${{ github.event_name == 'pull_request' && format('--meta prNumber={0}', github.event.pull_request.number) || '' }}
+          PROD: ${{ github.event_name == 'push' && '--prod' || '' }}
         run: |
-          url=$(vercel deploy --prebuilt ${{ github.event_name == 'push' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt $PROD $META --token="$VERCEL_TOKEN")
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "Deployed to $url" >> "$GITHUB_STEP_SUMMARY"
 
@@ -84,6 +92,8 @@ jobs:
               await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
             }
 
+      # Audits the live preview URL, so it must stay ahead of any teardown.
+      # `wait` defaults to true, so the audit finishes before the job ends.
       - name: Run Ritim
         if: github.event_name == 'pull_request'
         uses: ritim-io/pr-review-action@main
@@ -91,3 +101,80 @@ jobs:
           project-secret: ${{ secrets.RITIM_PROJECT_SECRET }}
           preview-url: ${{ steps.deploy.outputs.url }}
           api-url: 'https://api-staging.ritim.io'
+
+  teardown:
+    name: Teardown preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    # Never cancel a teardown in flight — a half-run cleanup leaks deployments.
+    concurrency:
+      group: vercel-teardown-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Link Vercel project
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Remove preview deployments for this PR
+        id: remove
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # Match only fully-qualified deployment hostnames. `vercel remove`
+          # deletes the whole PROJECT if handed a bare project name, so never
+          # pass anything that isn't a *.vercel.app URL.
+          urls=$(vercel list \
+                   --meta "prNumber=$PR_NUMBER" \
+                   --environment=preview \
+                   --token="$VERCEL_TOKEN" \
+                 | grep -oE 'https://[a-zA-Z0-9.-]+\.vercel\.app' \
+                 | sort -u || true)
+
+          if [ -z "$urls" ]; then
+            echo "No preview deployments tagged prNumber=$PR_NUMBER."
+            echo "removed=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          count=$(printf '%s\n' "$urls" | wc -l | tr -d ' ')
+          printf 'Removing %s deployment(s):\n%s\n' "$count" "$urls"
+          printf '%s\n' "$urls" | xargs vercel remove --yes --token="$VERCEL_TOKEN"
+
+          echo "removed=$count" >> "$GITHUB_OUTPUT"
+          echo "Removed $count preview deployment(s) for PR #$PR_NUMBER" >> "$GITHUB_STEP_SUMMARY"
+
+      # The preview URL and Ritim's performance report both point at a host
+      # that no longer resolves. Mark them so the PR has no dead links.
+      - name: Retract preview and Ritim comments
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const markers = [
+              '<!-- vercel-preview -->',
+              'Ritim',
+            ];
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+            });
+            const mine = comments.filter(
+              (c) => c.user?.type === 'Bot' && markers.some((m) => c.body?.includes(m)),
+            );
+            for (const c of mine) {
+              if (c.body?.includes('<!-- torn-down -->')) continue;
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: c.id,
+                body: `<!-- torn-down -->\n> [!NOTE]\n> The preview deployment for this PR has been removed. Links below are no longer live.\n\n<details><summary>Previous report</summary>\n\n${c.body}\n\n</details>`,
+              });
+            }
