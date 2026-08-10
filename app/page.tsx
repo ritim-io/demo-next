@@ -13,7 +13,7 @@ import {
 } from "./_lab/config";
 
 export const metadata: Metadata = {
-  title: "Web Vitals Lab",
+  title: "Web Vitals Lab Testing PR",
   description:
     "A demo page built to fail LCP, CLS and INP on purpose, for web vitals measurement.",
 };
