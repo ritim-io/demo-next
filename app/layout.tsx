@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 import { RitimAnalytics } from "./_components/ritim-analytics";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +29,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <menu 
       className={`mx-auto underline w-80 h-20 p-4 space-x-4`}>
-          <a href="/">Home</a>
-          <a href="/blog">Blogs</a>
+          <Link href="/">Home</Link>
+          <Link href="/blog">Blogs</Link>
         </menu>
         {children}
         <RitimAnalytics />
