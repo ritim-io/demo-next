@@ -30,6 +30,7 @@ export function SlowButton() {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <button
+        id="slow-button-click"
         type="button"
         onClick={handleClick}
         className="flex h-12 items-center justify-center rounded-full bg-foreground px-6 text-base font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
